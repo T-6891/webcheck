@@ -253,13 +253,16 @@ async fn update_config(
     let check_interval = form.check_interval.max(5).min(3600);
     let refresh_interval = form.refresh_interval.max(5).min(3600);
     
-    let mut state_guard = state.write().unwrap();
-    let (_, config) = &mut *state_guard;
+    // Ограничиваем область видимости блокировки
+    {
+        let mut state_guard = state.write().unwrap();
+        let (_, config) = &mut *state_guard;
+        
+        config.check_interval = check_interval;
+        config.refresh_interval = refresh_interval;
+    } // write-блокировка освобождается здесь
     
-    config.check_interval = check_interval;
-    config.refresh_interval = refresh_interval;
-    
-    // Save state after config update
+    // Теперь save_state может получить read-блокировку без проблем
     save_state(&state);
     
     Redirect::to("/")
