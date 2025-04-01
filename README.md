@@ -38,7 +38,7 @@ WebCheck is a lightweight, real-time web resource monitoring application built w
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/user-name/webcheck.git
+   git clone git@github.com:T-6891/webcheck.git
    cd webcheck
    ```
 
