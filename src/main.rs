@@ -68,8 +68,7 @@ fn time_ago_in_minutes(date: &DateTime<Utc>) -> i64 {
 }
 
 #[derive(Template)]
-#[template(path = "index.html")]
-#[template(filters(filters))]  // Указываем модуль с фильтрами
+#[template(path = "index.html", escape = "html", filters(filters))]
 struct IndexTemplate {
     resources: Vec<Resource>,
     config: AppConfig,
