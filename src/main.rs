@@ -17,6 +17,13 @@ use tokio::time;
 use tower_http::services::ServeDir;
 use askama::Template;
 
+// Добавляем модуль с фильтром для форматирования чисел с плавающей точкой
+mod filters {
+    pub fn format_float(f: &f64) -> ::askama::Result<String> {
+        Ok(format!("{:.4}", f))
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 enum Status {
     Up,
@@ -62,6 +69,7 @@ fn time_ago_in_minutes(date: &DateTime<Utc>) -> i64 {
 
 #[derive(Template)]
 #[template(path = "index.html")]
+#[template(filters(filters))]  // Указываем модуль с фильтрами
 struct IndexTemplate {
     resources: Vec<Resource>,
     config: AppConfig,
