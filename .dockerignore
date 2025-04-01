@@ -1,0 +1,8 @@
+/target
+.DS_Store
+.git
+.github
+.gitignore
+*.md
+data/
+!README.md

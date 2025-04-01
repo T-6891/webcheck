@@ -1,0 +1,19 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# Rust files
+*.rs text diff=rust
+
+# Docker files
+Dockerfile text
+docker-compose.yml text
+.dockerignore text
+
+# Documentation
+*.md text diff=markdown
+LICENSE text
+
+# Config files
+*.toml text
+*.yml text
+*.json text

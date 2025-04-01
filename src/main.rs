@@ -4,12 +4,14 @@ use axum::{
     routing::{get, post},
     Router,
 };
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Utc, Duration as ChronoDuration};
 use serde::{Deserialize, Serialize};
 use std::{
     collections::HashMap,
     sync::{Arc, RwLock},
     time::Duration,
+    fs,
+    path::Path,
 };
 use tokio::time;
 use tower_http::services::ServeDir;
@@ -31,6 +33,8 @@ struct Resource {
     response_time: Option<u64>,
     response_times: Vec<u64>,
     jitter: Option<f64>,
+    #[serde(skip)]
+    minutes_ago: i64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -39,7 +43,22 @@ struct AppConfig {
     refresh_interval: u64, // In seconds
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct SavedState {
+    resources: HashMap<String, Resource>,
+    config: AppConfig,
+}
+
+const CONFIG_PATH: &str = "webcheck_config.json";
+
 type AppState = Arc<RwLock<(HashMap<String, Resource>, AppConfig)>>;
+
+// Функция-помощник для вычисления времени "n минут назад"
+fn time_ago_in_minutes(date: &DateTime<Utc>) -> i64 {
+    let now = Utc::now();
+    let diff = now.signed_duration_since(*date);
+    diff.num_minutes()
+}
 
 #[derive(Template)]
 #[template(path = "index.html")]
@@ -107,16 +126,46 @@ async fn check_resource(url: String, state: AppState) {
             response_time: Some(elapsed),
             response_times: vec![elapsed],
             jitter: None,
+            minutes_ago: 0,
         }
     };
     
     resources.insert(url, resource);
+    
+    // Save state periodically (to avoid too many writes, only save every 10 minutes)
+    let now = Utc::now();
+    let save_interval = ChronoDuration::minutes(10);
+    
+    static mut LAST_SAVE: Option<DateTime<Utc>> = None;
+    
+    let should_save = unsafe {
+        match LAST_SAVE {
+            Some(last_save) => now.signed_duration_since(last_save) >= save_interval,
+            None => true,
+        }
+    };
+    
+    if should_save {
+        // Drop the guard before saving to avoid deadlocks
+        drop(state_guard);
+        save_state(&state);
+        
+        unsafe {
+            LAST_SAVE = Some(now);
+        }
+    }
 }
 
 async fn index_handler(State(state): State<AppState>) -> Html<String> {
     let state_guard = state.read().unwrap();
     let (resources, config) = &*state_guard;
-    let resources_vec: Vec<Resource> = resources.values().cloned().collect();
+    
+    // Клонируем ресурсы и рассчитываем время в минутах
+    let mut resources_vec: Vec<Resource> = resources.values().cloned().collect();
+    
+    for resource in &mut resources_vec {
+        resource.minutes_ago = time_ago_in_minutes(&resource.last_checked);
+    }
     
     let template = IndexTemplate {
         resources: resources_vec,
@@ -159,9 +208,14 @@ async fn add_resource(
             response_time: None,
             response_times: Vec::new(),
             jitter: None,
+            minutes_ago: 0,
         };
         
         resources.insert(form.url.clone(), resource);
+        
+        // Save state after adding resource
+        drop(state_guard);
+        save_state(&state);
         
         // Spawn a task to check this resource
         let state_clone = state.clone();
@@ -169,6 +223,8 @@ async fn add_resource(
         tokio::spawn(async move {
             check_resource(url_clone, state_clone).await;
         });
+    } else {
+        drop(state_guard);
     }
     
     Redirect::to("/")
@@ -181,6 +237,10 @@ async fn remove_resource(
     let mut state_guard = state.write().unwrap();
     let (resources, _) = &mut *state_guard;
     resources.remove(&form.url);
+    
+    // Save state after removing resource
+    drop(state_guard);
+    save_state(&state);
     
     Redirect::to("/")
 }
@@ -199,7 +259,53 @@ async fn update_config(
     config.check_interval = check_interval;
     config.refresh_interval = refresh_interval;
     
+    // Save state after config update
+    save_state(&state);
+    
     Redirect::to("/")
+}
+
+// Save current state to file
+fn save_state(state: &AppState) {
+    let state_guard = state.read().unwrap();
+    let (resources, config) = &*state_guard;
+    
+    let saved_state = SavedState {
+        resources: resources.clone(),
+        config: config.clone(),
+    };
+    
+    match serde_json::to_string_pretty(&saved_state) {
+        Ok(json) => {
+            if let Err(e) = fs::write(CONFIG_PATH, json) {
+                eprintln!("Failed to save state: {}", e);
+            }
+        },
+        Err(e) => eprintln!("Failed to serialize state: {}", e),
+    }
+}
+
+// Load state from file
+fn load_state() -> Option<SavedState> {
+    if !Path::new(CONFIG_PATH).exists() {
+        return None;
+    }
+    
+    match fs::read_to_string(CONFIG_PATH) {
+        Ok(json) => {
+            match serde_json::from_str(&json) {
+                Ok(state) => Some(state),
+                Err(e) => {
+                    eprintln!("Failed to parse saved state: {}", e);
+                    None
+                }
+            }
+        },
+        Err(e) => {
+            eprintln!("Failed to read saved state: {}", e);
+            None
+        }
+    }
 }
 
 #[tokio::main]
@@ -207,8 +313,8 @@ async fn main() {
     // Initialize tracing
     tracing_subscriber::fmt::init();
     
-    // Define resources to monitor
-    let urls = vec![
+    // Define default resources to monitor (used only if no saved state)
+    let default_urls = vec![
         "https://www.google.com".to_string(),
         "https://www.github.com".to_string(),
         "https://www.rust-lang.org".to_string(),
@@ -217,33 +323,42 @@ async fn main() {
     ];
     
     // Initialize default config
-    let config = AppConfig {
-        check_interval: 60,  // Default: check every 60 seconds
+    let default_config = AppConfig {
+        check_interval: 60,   // Default: check every 60 seconds
         refresh_interval: 30, // Default: refresh UI every 30 seconds
     };
     
-    // Initialize state with empty resources and default config
-    let resources = HashMap::new();
-    let state: AppState = Arc::new(RwLock::new((resources, config)));
-    
-    // Initialize resources with Unknown status
-    {
-        let mut state_guard = state.write().unwrap();
-        let (resources, _) = &mut *state_guard;
-        
-        for url in &urls {
-            let resource = Resource {
-                url: url.clone(),
-                status: Status::Unknown,
-                status_code: None,
-                last_checked: Utc::now(),
-                response_time: None,
-                response_times: Vec::new(),
-                jitter: None,
-            };
-            resources.insert(url.clone(), resource);
+    // Try to load saved state or use defaults
+    let (resources, config) = match load_state() {
+        Some(saved_state) => {
+            println!("Loaded saved configuration");
+            (saved_state.resources, saved_state.config)
+        },
+        None => {
+            println!("Using default configuration");
+            let mut resources = HashMap::new();
+            
+            // Initialize resources with Unknown status
+            for url in &default_urls {
+                let resource = Resource {
+                    url: url.clone(),
+                    status: Status::Unknown,
+                    status_code: None,
+                    last_checked: Utc::now(),
+                    response_time: None,
+                    response_times: Vec::new(),
+                    jitter: None,
+                    minutes_ago: 0,
+                };
+                resources.insert(url.clone(), resource);
+            }
+            
+            (resources, default_config)
         }
-    }
+    };
+    
+    // Create state
+    let state: AppState = Arc::new(RwLock::new((resources, config)));
     
     // Clone state for the background task
     let background_state = state.clone();

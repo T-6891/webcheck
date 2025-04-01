@@ -1,0 +1,11 @@
+version: '3'
+
+services:
+  webcheck:
+    build: .
+    container_name: webcheck
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./data:/opt/webcheck/data
+    restart: unless-stopped

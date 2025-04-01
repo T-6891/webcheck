@@ -14,4 +14,4 @@ async-trait = "0.1.77"
 tracing = "0.1.40"
 tracing-subscriber = { version = "0.3.18", features = ["env-filter"] }
 serde_json = "1.0.114"
-askama = "0.12.1"
+askama = { version = "0.12.1" }

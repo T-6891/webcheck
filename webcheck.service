@@ -1,0 +1,18 @@
+[Unit]
+Description=WebCheck - Website monitoring service
+After=network.target
+
+[Service]
+Type=simple
+User=www-data
+WorkingDirectory=/opt/webcheck
+ExecStart=/opt/webcheck/webcheck
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=webcheck
+Environment=RUST_LOG=info
+
+[Install]
+WantedBy=multi-user.target

@@ -223,7 +223,13 @@
                         N/A
                     {% endif %}
                 </td>
-                <td>{{ resource.last_checked }}</td>
+                <td>
+                    {% if resource.minutes_ago == 0 %}
+                        только что
+                    {% else %}
+                        {{ resource.minutes_ago }} мин. назад
+                    {% endif %}
+                </td>
                 <td>
                     <form action="/remove" method="post" style="margin-bottom: 0;">
                         <input type="hidden" name="url" value="{{ resource.url }}">
