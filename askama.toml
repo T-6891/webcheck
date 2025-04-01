@@ -1,0 +1,3 @@
+[general]
+# The directories where templates are stored.
+dirs = ["templates"]
