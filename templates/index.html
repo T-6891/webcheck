@@ -104,12 +104,10 @@
             font-size: 1.25rem;
         }
         .panel-body {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.3s ease-out;
+            display: none;
         }
         .panel.active .panel-body {
-            max-height: 300px; /* Достаточно для содержимого */
+            display: block;
         }
         .toggle-icon {
             transition: transform 0.3s ease;
@@ -172,19 +170,25 @@
                 window.location.reload();
             }, {{ config.refresh_interval * 1000 }});
             
-            // Add toggle functionality to panels
+            // Функционал раскрытия/сворачивания панелей
             document.querySelectorAll('.panel-header').forEach(header => {
                 header.addEventListener('click', function() {
                     const panel = this.closest('.panel');
                     panel.classList.toggle('active');
+                    console.log('Panel toggled:', panel.id);
                 });
             });
         });
         
-        // Function to toggle panel visibility
+        // Функция переключения видимости панели
         function togglePanel(panelId) {
             const panel = document.getElementById(panelId);
-            panel.classList.toggle('active');
+            if (panel) {
+                panel.classList.toggle('active');
+                console.log('Panel toggled via function:', panelId, panel.classList.contains('active'));
+            } else {
+                console.error('Panel not found:', panelId);
+            }
         }
     </script>
 </head>
