@@ -86,36 +86,6 @@
             border-radius: 4px;
             margin-bottom: 1rem;
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-            transition: max-height 0.3s ease-out;
-        }
-        .panel-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer;
-            padding: 0.5rem;
-            background-color: #e9ecef;
-            border-radius: 4px;
-            margin-bottom: 1rem;
-        }
-        .panel-header h2 {
-            margin: 0;
-            font-size: 1.25rem;
-        }
-        .panel-body {
-            display: none;
-        }
-        .panel.active .panel-body {
-            display: block;
-        }
-        .toggle-icon {
-            transition: transform 0.3s ease;
-            font-size: 1.5rem;
-            font-weight: bold;
-        }
-        .panel.active .toggle-icon {
-            transform: rotate(180deg);
         }
         .flex-container {
             display: flex;
@@ -165,73 +135,42 @@
     <script>
         // Set refresh interval based on config
         document.addEventListener('DOMContentLoaded', function() {
-            // Auto refresh page
             setTimeout(() => {
                 window.location.reload();
             }, {{ config.refresh_interval * 1000 }});
-            
-            // Функционал раскрытия/сворачивания панелей
-            document.querySelectorAll('.panel-header').forEach(header => {
-                header.addEventListener('click', function() {
-                    const panel = this.closest('.panel');
-                    panel.classList.toggle('active');
-                    console.log('Panel toggled:', panel.id);
-                });
-            });
         });
-        
-        // Функция переключения видимости панели
-        function togglePanel(panelId) {
-            const panel = document.getElementById(panelId);
-            if (panel) {
-                panel.classList.toggle('active');
-                console.log('Panel toggled via function:', panelId, panel.classList.contains('active'));
-            } else {
-                console.error('Panel not found:', panelId);
-            }
-        }
     </script>
 </head>
 <body>
     <h1>WebCheck - Resource Monitor</h1>
     
     <div class="flex-container">
-        <div class="panel" id="addResourcePanel">
-            <div class="panel-header" onclick="togglePanel('addResourcePanel')">
-                <h2>Add Resource</h2>
-                <span class="toggle-icon">▼</span>
-            </div>
-            <div class="panel-body">
-                <form action="/add" method="post">
-                    <div class="form-group">
-                        <label for="url">URL (including http:// or https://)</label>
-                        <input type="text" id="url" name="url" placeholder="https://example.com" required>
-                    </div>
-                    <button type="submit">Add Resource</button>
-                </form>
-            </div>
+        <div class="panel">
+            <h2>Add Resource</h2>
+            <form action="/add" method="post">
+                <div class="form-group">
+                    <label for="url">URL (including http:// or https://)</label>
+                    <input type="text" id="url" name="url" placeholder="https://example.com" required>
+                </div>
+                <button type="submit">Add Resource</button>
+            </form>
         </div>
         
-        <div class="panel" id="configPanel">
-            <div class="panel-header" onclick="togglePanel('configPanel')">
-                <h2>Configuration</h2>
-                <span class="toggle-icon">▼</span>
-            </div>
-            <div class="panel-body">
-                <form action="/config" method="post">
-                    <div class="form-group">
-                        <label for="check_interval">Check Interval (seconds)</label>
-                        <input type="number" id="check_interval" name="check_interval" 
-                            min="5" max="3600" value="{{ config.check_interval }}" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="refresh_interval">Page Refresh Interval (seconds)</label>
-                        <input type="number" id="refresh_interval" name="refresh_interval" 
-                            min="5" max="3600" value="{{ config.refresh_interval }}" required>
-                    </div>
-                    <button type="submit">Update Configuration</button>
-                </form>
-            </div>
+        <div class="panel">
+            <h2>Configuration</h2>
+            <form action="/config" method="post">
+                <div class="form-group">
+                    <label for="check_interval">Check Interval (seconds)</label>
+                    <input type="number" id="check_interval" name="check_interval" 
+                           min="5" max="3600" value="{{ config.check_interval }}" required>
+                </div>
+                <div class="form-group">
+                    <label for="refresh_interval">Page Refresh Interval (seconds)</label>
+                    <input type="number" id="refresh_interval" name="refresh_interval" 
+                           min="5" max="3600" value="{{ config.refresh_interval }}" required>
+                </div>
+                <button type="submit">Update Configuration</button>
+            </form>
         </div>
     </div>
     
