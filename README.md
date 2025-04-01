@@ -1,132 +1,174 @@
-# WebCheck - Мониторинг доступности веб-ресурсов
+# WebCheck - Real-time Website Monitoring Tool
 
-WebCheck - это приложение на Rust для мониторинга доступности веб-ресурсов в режиме реального времени.
+[![Rust CI](https://github.com/user-name/webcheck/actions/workflows/rust.yml/badge.svg)](https://github.com/user-name/webcheck/actions/workflows/rust.yml)
+[![License: CC BY-NC 4.0](https://img.shields.io/badge/License-CC%20BY--NC%204.0-lightgrey.svg)](http://creativecommons.org/licenses/by-nc/4.0/)
 
-## Функциональные возможности
+WebCheck is a lightweight, real-time web resource monitoring application built with Rust. It provides a simple and efficient way to monitor website availability, response times, and performance metrics through an intuitive web interface.
 
-- Мониторинг доступности веб-сайтов
-- Отображение статуса ресурсов с цветовой индикацией
-- Показ статус-кодов HTTP
-- Измерение времени отклика
-- Расчет jitter (колебания времени отклика)
-- Возможность добавлять и удалять отслеживаемые ресурсы
-- Настройка интервала проверки ресурсов
-- Настройка интервала автообновления страницы
-- Сохранение конфигурации при перезапуске
+![WebCheck Screenshot](https://via.placeholder.com/800x450.png?text=WebCheck+Screenshot)
 
-## Инструкция по запуску
+## Features
 
-### Прямой запуск
+- **Real-time Website Monitoring**: Track the availability and performance of multiple web resources
+- **Status Visualization**: Color-coded status indicators (UP, DOWN, UNKNOWN)
+- **Performance Metrics**:
+  - HTTP status codes
+  - Response time in milliseconds
+  - Jitter calculation (response time fluctuations)
+  - Time since last check
+- **Resource Management**:
+  - Add new resources to monitor
+  - Remove resources from monitoring
+  - Configure check intervals
+  - Set auto-refresh intervals
+- **Persistent Configuration**: Saves settings between restarts
+- **Docker Support**: Easy deployment via Docker/docker-compose
+- **Systemd Integration**: Run as a system service on Linux
 
-1. Перейдите в директорию проекта:
-   ```
+## Getting Started
+
+### Prerequisites
+
+- Rust 1.77.0 or later
+- (Optional) Docker and docker-compose for containerized deployment
+
+### Installation
+
+#### Method 1: Building from Source
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/user-name/webcheck.git
    cd webcheck
    ```
 
-2. Скомпилируйте проект:
-   ```
+2. Build the project:
+   ```bash
    cargo build --release
    ```
 
-3. Запустите приложение:
-   ```
+3. Run the application:
+   ```bash
    ./target/release/webcheck
    ```
 
-4. Откройте в браузере адрес:
+4. Access the dashboard:
    ```
    http://localhost:3000
    ```
 
-### Запуск в Docker
+#### Method 2: Using Docker
 
-1. Соберите контейнер:
-   ```
-   docker-compose build
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/user-name/webcheck.git
+   cd webcheck
    ```
 
-2. Запустите контейнер:
-   ```
+2. Build and start the container:
+   ```bash
    docker-compose up -d
    ```
 
-3. Для просмотра логов:
+3. Access the dashboard:
    ```
-   docker-compose logs -f
-   ```
-
-4. Для остановки:
-   ```
-   docker-compose down
+   http://localhost:3000
    ```
 
-### Установка как системный сервис
+#### Method 3: Installing as a System Service (Linux)
 
-1. Скомпилируйте приложение:
-   ```
+1. Build the application:
+   ```bash
    cargo build --release
    ```
 
-2. Создайте директорию для приложения:
-   ```
+2. Create application directory:
+   ```bash
    sudo mkdir -p /opt/webcheck
    ```
 
-3. Скопируйте исполняемый файл и шаблоны:
-   ```
+3. Copy executable and templates:
+   ```bash
    sudo cp target/release/webcheck /opt/webcheck/
    sudo cp -r templates /opt/webcheck/
    ```
 
-4. Установите файл сервиса:
-   ```
+4. Install service file:
+   ```bash
    sudo cp webcheck.service /etc/systemd/system/
    ```
 
-5. Разрешите и запустите сервис:
-   ```
+5. Enable and start the service:
+   ```bash
    sudo systemctl daemon-reload
    sudo systemctl enable webcheck
    sudo systemctl start webcheck
    ```
 
-6. Проверьте статус сервиса:
-   ```
+6. Check service status:
+   ```bash
    sudo systemctl status webcheck
    ```
 
-## Использование панели управления
+## Usage
 
-### Добавление нового ресурса для мониторинга
-1. В секции "Add Resource" введите полный URL-адрес (с http:// или https://)
-2. Нажмите кнопку "Add Resource"
+### Dashboard Overview
 
-### Удаление ресурса из мониторинга
-1. В таблице ресурсов нажмите кнопку "Remove" напротив нужного ресурса
+The WebCheck dashboard provides a comprehensive view of all monitored resources with the following information:
+- URL
+- Status (UP/DOWN/UNKNOWN)
+- HTTP Status Code
+- Response Time
+- Jitter (response time fluctuation)
+- Last Checked (in minutes)
 
-### Настройка интервалов
-1. В секции "Configuration" установите:
-   - Check Interval - интервал проверки ресурсов (в секундах)
-   - Page Refresh Interval - интервал автообновления страницы (в секундах)
-2. Нажмите кнопку "Update Configuration"
+### Adding Resources
 
-### Мониторинг
-- Таблица ресурсов отображает текущий статус каждого ресурса
-- Столбец "Jitter" показывает стабильность времени отклика (математическое стандартное отклонение)
-- Время последней проверки показывается в минутах ("N минут назад")
-- Для немедленного обновления данных нажмите кнопку "Refresh Now"
-- Страница автоматически обновляется согласно настроенному интервалу
+1. In the "Add Resource" section, enter the complete URL (including http:// or https://)
+2. Click "Add Resource"
 
-## Технические детали
+### Removing Resources
 
-Приложение разработано на Rust с использованием:
-- Axum (веб-фреймворк)
-- Tokio (асинхронная среда выполнения)
-- Askama (система шаблонов)
-- Reqwest (HTTP-клиент)
-<<<<<<< HEAD
+1. In the resources table, click the "Remove" button next to the resource you want to stop monitoring
 
-## Лицензия
+### Configuring Settings
 
-<a rel="license" href="http://creativecommons.org/licenses/by-nc/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc/4.0/88x31.png" /></a><br />Это произведение лицензируется по <a rel="license" href="http://creativecommons.org/licenses/by-nc/4.0/">Creative Commons Attribution-NonCommercial 4.0 International License</a>.
-=======
+1. In the "Configuration" section:
+   - Set "Check Interval" (in seconds) to control how often resources are checked
+   - Set "Page Refresh Interval" (in seconds) to control how often the dashboard updates
+2. Click "Update Configuration"
+
+### Refreshing Data
+
+- The page automatically refreshes based on your configured interval
+- For immediate updates, click the "Refresh Now" button
+
+## Technical Details
+
+WebCheck is built with modern Rust technologies:
+
+- **Backend Framework**: [Axum](https://github.com/tokio-rs/axum)
+- **Async Runtime**: [Tokio](https://tokio.rs/)
+- **HTTP Client**: [Reqwest](https://github.com/seanmonstar/reqwest)
+- **Templating**: [Askama](https://github.com/djc/askama)
+- **Date/Time**: [Chrono](https://github.com/chronotope/chrono)
+- **Serialization**: [Serde](https://serde.rs/)
+
+## Contributing
+
+Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for detailed information on how to contribute to this project.
+
+## License
+
+<a rel="license" href="http://creativecommons.org/licenses/by-nc/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc/4.0/88x31.png" /></a><br />This work is licensed under a <a rel="license" href="http://creativecommons.org/licenses/by-nc/4.0/">Creative Commons Attribution-NonCommercial 4.0 International License</a>.
+
+## Roadmap
+
+Future development plans include:
+
+- Additional metrics (average response time, availability percentage)
+- Extended monitoring capabilities (content validation, SSL certificate checks)
+- Notifications via email/Telegram for resource unavailability
+- Authentication system
+- Historical data storage and visualization
+- API for integrating with other monitoring systems
