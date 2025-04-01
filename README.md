@@ -20,7 +20,7 @@ WebCheck - это приложение на Rust для мониторинга �
 
 1. Перейдите в директорию проекта:
    ```
-   cd /home/t-7219/Dev/Webcheck/webcheck
+   cd webcheck
    ```
 
 2. Скомпилируйте проект:
@@ -124,7 +124,9 @@ WebCheck - это приложение на Rust для мониторинга �
 - Tokio (асинхронная среда выполнения)
 - Askama (система шаблонов)
 - Reqwest (HTTP-клиент)
+<<<<<<< HEAD
 
 ## Лицензия
 
 <a rel="license" href="http://creativecommons.org/licenses/by-nc/4.0/"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc/4.0/88x31.png" /></a><br />Это произведение лицензируется по <a rel="license" href="http://creativecommons.org/licenses/by-nc/4.0/">Creative Commons Attribution-NonCommercial 4.0 International License</a>.
+=======
