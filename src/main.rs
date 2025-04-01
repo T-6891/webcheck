@@ -17,13 +17,6 @@ use tokio::time;
 use tower_http::services::ServeDir;
 use askama::Template;
 
-// Добавляем модуль с фильтром для форматирования чисел с плавающей точкой
-mod filters {
-    pub fn format_float(f: &f64) -> ::askama::Result<String> {
-        Ok(format!("{:.4}", f))
-    }
-}
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 enum Status {
     Up,
@@ -68,7 +61,7 @@ fn time_ago_in_minutes(date: &DateTime<Utc>) -> i64 {
 }
 
 #[derive(Template)]
-#[template(path = "index.html", escape = "html", filters(filters))]
+#[template(path = "index.html")]
 struct IndexTemplate {
     resources: Vec<Resource>,
     config: AppConfig,
@@ -260,16 +253,13 @@ async fn update_config(
     let check_interval = form.check_interval.max(5).min(3600);
     let refresh_interval = form.refresh_interval.max(5).min(3600);
     
-    // Ограничиваем область видимости блокировки
-    {
-        let mut state_guard = state.write().unwrap();
-        let (_, config) = &mut *state_guard;
-        
-        config.check_interval = check_interval;
-        config.refresh_interval = refresh_interval;
-    } // write-блокировка освобождается здесь
+    let mut state_guard = state.write().unwrap();
+    let (_, config) = &mut *state_guard;
     
-    // Теперь save_state может получить read-блокировку без проблем
+    config.check_interval = check_interval;
+    config.refresh_interval = refresh_interval;
+    
+    // Save state after config update
     save_state(&state);
     
     Redirect::to("/")
